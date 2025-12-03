@@ -1,20 +1,23 @@
+upadted app.py
+ 
 from flask import Flask
 import socket
-
+import requests
+ 
 app = Flask(__name__)
-hostname = socket.gethostname()
-ip_address = socket.gethostbyname(hostname)
-
+ 
 @app.route('/')
 def hello_cloud():
-  return 'Hello Cloud!'
-  
+    return 'Welcome to manchikanti Final Test API Serve'
+ 
 @app.route('/host')
 def host_name():
-  return hostname
-
+    return socket.gethostname()
+ 
 @app.route('/ip')
 def host_ip():
-  return ip_address
-
-app.run(host='0.0.0.0')
+    # Return public IP (works in ECS Fargate)
+    return requests.get('https://checkip.amazonaws.com').text.strip()
+ 
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
