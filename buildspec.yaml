@@ -1,0 +1,28 @@
+version: 0.2
+
+env:
+  variables:
+    IMAGE_TAG: "latest"
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_URI
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=$COMMIT_HASH
+  build:
+    commands:
+      - echo Building Docker image...
+      - docker build -t $REPO_NAME:$IMAGE_TAG .
+      - docker tag $REPO_NAME:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Pushing Docker image to ECR...
+      - docker push $ECR_URI:$IMAGE_TAG
+      - echo Creating imagedefinitions.json file...
+      - printf '[{"name":"Manchikanti-app","imageUri":"%s"}]' "$ECR_URI:$IMAGE_TAG" > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
